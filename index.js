@@ -8,23 +8,24 @@ module.exports = function (homebridge) {
     Accessory = homebridge.hap.Accessory;
     uuid = homebridge.hap.uuid;
 
-    homebridge.registerAccessory("homebridge-hyperion", "Hyperion", HyperionAccessory);
+    homebridge.registerAccessory("homebridge-tiedyegeek-hyperion-ng", "Hyperion", HyperionAccessory);
 }
 
 function HyperionAccessory(log, config) {
-    this.log        = log;
-    this.host       = config["host"];
-    this.port       = config["port"];
-    this.name       = config["name"];
-    this.ambi_name  = config["ambilight_name"];
-    this.priority   = parseInt(config["priority"]) || 100;
-    this.color      = Color().rgb([0, 0, 0]);
-    this.prevColor  = Color().rgb([255, 255, 255]);
+    this.log             = log;
+    this.host            = config["host"];
+    this.port            = config["port"];
+    this.name            = config["name"];
+    this.ambi_name       = config["ambilight_name"];
+    this.ambi_brightness = parseInt(config["ambilight_brightness"]) || 100;
+    this.priority        = parseInt(config["priority"]) || 100;
+    this.color           = Color().rgb([0, 0, 0]);
+    this.prevColor       = Color().rgb([255, 255, 255]);
     this.lightService;
     this.ambiService;
     this.infoService;
     this.log("Starting Hyperion Accessory");
-   }
+}
 
 HyperionAccessory.prototype.sendHyperionCommand = function (command, color, callback) {
     var client = new net.Socket();
@@ -34,13 +35,16 @@ HyperionAccessory.prototype.sendHyperionCommand = function (command, color, call
         case 'powerMode':
             commands.push({
                 command: "clearall"
-            });
-            commands.push({
+            },{
+                command: "adjustment",
+                adjustment: {
+                    brightness: 100
+                } 
+            },{
                 command: "color",
                 priority: this.priority,
                 color: color.rgbArray()
-            });
-            commands.push({
+            },{
                 command: "transform",
                 transform: {
                     blacklevel: [0, 0, 0],
@@ -57,6 +61,11 @@ HyperionAccessory.prototype.sendHyperionCommand = function (command, color, call
             break;
         case 'ambilight':
             commands.push({
+                command: "adjustment",
+                adjustment: {
+                    brightness: this.ambi_brightness
+                } 
+            },{
                 command: "clearall"
             });
             break;
